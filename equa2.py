@@ -8,18 +8,41 @@ from pathlib import Path
 # ========================================
 
 st.set_page_config(
-    page_title="Equação do 1º Grau",
-    page_icon="📈",
+    page_title="MatFuturo - Equação do 2º Grau",
+    page_icon="📐",
     layout="centered"
 )
 
+# ========================================
+# ESTILO - CORES VERDES DA ESCOLA
+# ========================================
+
 st.markdown("""
-    <style>
-        /* Fundo principal da página */
-        .stApp {
-            background-color: #0D47A1;
-        }
-    </style>
+<style>
+    .stApp {
+        background-color: #E8F5E9;
+    }
+
+    h1, h2, h3 {
+        color: #2E7D32;
+    }
+
+    .cabecalho {
+        color: #388E3C;
+        font-size: 28px;
+        font-weight: bold;
+        text-align: center;
+        margin-top: 20px;
+        margin-bottom: 10px;
+    }
+
+    .info {
+        color: #333333;
+        font-size: 18px;
+        text-align: center;
+        margin: 8px 0;
+    }
+</style>
 """, unsafe_allow_html=True)
 
 # ========================================
@@ -27,47 +50,88 @@ st.markdown("""
 # ========================================
 
 PASTA_APP = Path(__file__).parent
-CAMINHO_LOGO = PASTA_APP / "unnamed.jpg"
-
-if CAMINHO_LOGO.exists():
-    col1, col2, col3 = st.columns([1, 2, 1])
-
-    with col2:
-        st.image(
-            str(CAMINHO_LOGO),
-            use_container_width=True
-        )
-else:
-    st.warning("A imagem unnamed.jpg não foi encontrada. ⚠️")
-
+CAMINHO_IMAGEM = PASTA_APP / "imagem_escola.png"
 
 # ========================================
-# TÍTULO
+# CABEÇALHO COM A IMAGEM ENVIADA
 # ========================================
 
-st.title("📈 Equação do 1º Grau")
+col1, col2 = st.columns([1, 1.5], vertical_alignment="center")
 
-st.write("Equação no formato:")
+with col1:
+    if CAMINHO_IMAGEM.exists():
+        st.image(str(CAMINHO_IMAGEM), use_container_width=True)
+    else:
+        st.warning("A imagem 'imagem_escola.png' não foi encontrada.")
 
-st.latex(r"ax + b = 0")
+with col2:
+    st.markdown(
+        '<div class="cabecalho">Equação segundo grau</div>',
+        unsafe_allow_html=True
+    )
+    st.markdown(
+        '<div class="info">Cores da escola verde</div>',
+        unsafe_allow_html=True
+    )
+    st.markdown(
+        '<div class="info">Nome da escola: MatFuturo</div>',
+        unsafe_allow_html=True
+    )
+    st.markdown(
+        '<div class="info">App</div>',
+        unsafe_allow_html=True
+    )
 
+# ========================================
+# TÍTULO DO APLICATIVO
+# ========================================
+
+st.title("Calculadora de Equação do 2º Grau")
+
+st.write("Resolva uma equação no formato:")
+st.latex(r"ax^2 + bx + c = 0")
 
 # ========================================
 # ENTRADA DOS VALORES
 # ========================================
 
-a = st.number_input(
-    "Digite o valor de a",
-    value=1,
-    step=1
-)
+st.subheader("Digite os valores")
 
-b = st.number_input(
-    "Digite o valor de b",
-    value=0,
-    step=1
-)
+col1, col2, col3 = st.columns(3)
 
+with col1:
+    a = st.number_input("Valor de a", value=1.0, step=1.0)
+
+with col2:
+    b = st.number_input("Valor de b", value=0.0, step=1.0)
+
+with col3:
+    c = st.number_input("Valor de c", value=0.0, step=1.0)
+
+# ========================================
+# FUNÇÕES AUXILIARES
+# ========================================
+
+def formatar_numero(valor):
+    if abs(valor - round(valor)) < 1e-10:
+        return str(int(round(valor)))
+    return f"{valor:.4f}".rstrip("0").rstrip(".")
+
+
+def formatar_equacao(a, b, c):
+    partes = [f"{formatar_numero(a)}x^2"]
+
+    if b >= 0:
+        partes.append(f"+ {formatar_numero(b)}x")
+    else:
+        partes.append(f"- {formatar_numero(abs(b))}x")
+
+    if c >= 0:
+        partes.append(f"+ {formatar_numero(c)}")
+    else:
+        partes.append(f"- {formatar_numero(abs(c))}")
+
+    return " ".join(partes) + " = 0"
 
 # ========================================
 # BOTÃO CALCULAR
@@ -75,165 +139,108 @@ b = st.number_input(
 
 if st.button("Calcular", use_container_width=True):
 
-    # ========================================
-    # VERIFICA O VALOR DE A
-    # ========================================
-
     if a == 0:
+        st.error(
+            "O valor de 'a' deve ser diferente de zero "
+            "para a equação ser do 2º grau."
+        )
+        st.stop()
 
-        if b == 0:
-            st.warning(
-                "A equação possui infinitas soluções."
-            )
+    # ========================================
+    # DISCRIMINANTE
+    # ========================================
 
-        else:
-            st.error(
-                "A equação não possui solução."
-            )
+    delta = b**2 - 4 * a * c
+
+    st.subheader("Equação")
+    st.latex(formatar_equacao(a, b, c))
+
+    st.subheader("Resolução")
+    st.latex(r"\Delta = b^2 - 4ac")
+    st.latex(
+        rf"\Delta = ({formatar_numero(b)})^2 - "
+        rf"4({formatar_numero(a)})({formatar_numero(c)})"
+    )
+    st.latex(rf"\Delta = {formatar_numero(delta)}")
+
+    # ========================================
+    # RAÍZES
+    # ========================================
+
+    if delta > 0:
+        raiz_delta = np.sqrt(delta)
+        x1 = (-b + raiz_delta) / (2 * a)
+        x2 = (-b - raiz_delta) / (2 * a)
+
+        st.success("A equação possui duas raízes reais diferentes.")
+
+        col1, col2 = st.columns(2)
+        with col1:
+            st.latex(rf"x_1 = {formatar_numero(x1)}")
+        with col2:
+            st.latex(rf"x_2 = {formatar_numero(x2)}")
+
+    elif delta == 0:
+        x1 = -b / (2 * a)
+        st.success("A equação possui uma raiz real (raiz dupla).")
+        st.latex(rf"x = {formatar_numero(x1)}")
 
     else:
+        st.warning("A equação não possui raízes reais, pois Δ < 0.")
 
-        # ====================================
-        # CALCULA A RAIZ
-        # ====================================
+    # ========================================
+    # FÓRMULA DE BHASKARA
+    # ========================================
 
-        x_raiz = -b / a
+    st.subheader("Fórmula de Bhaskara")
+    st.latex(r"x = \frac{-b \pm \sqrt{\Delta}}{2a}")
 
-        # ====================================
-        # RESULTADO
-        # ====================================
+    # ========================================
+    # GRÁFICO
+    # ========================================
 
-        st.subheader("Resultado")
+    st.subheader("Gráfico da função")
+    st.write("Função associada à equação:")
+    st.latex(
+        rf"y = {formatar_numero(a)}x^2 + "
+        rf"{formatar_numero(b)}x + "
+        rf"{formatar_numero(c)}"
+    )
 
-        st.write(
-            "A raiz da equação é:"
-        )
+    xv = -b / (2 * a)
+    yv = a * xv**2 + b * xv + c
 
-        st.success(
-            f"x = {x_raiz:.2f}"
-        )
+    xmin = xv - 8
+    xmax = xv + 8
 
-        # ====================================
-        # MOSTRA A EQUAÇÃO
-        # ====================================
+    x = np.linspace(xmin, xmax, 600)
+    y = a * x**2 + b * x + c
 
-        st.subheader("Equação")
+    fig, ax = plt.subplots(figsize=(8, 5))
 
-        if b >= 0:
-            st.latex(
-                f"{a}x + {b} = 0"
-            )
-        else:
-            st.latex(
-                f"{a}x - {abs(b)} = 0"
-            )
+    ax.plot(x, y, linewidth=2, label="f(x) = ax² + bx + c")
+    ax.axhline(y=0, linewidth=1)
+    ax.axvline(x=0, linewidth=1)
 
-        # ====================================
-        # MOSTRA O CÁLCULO
-        # ====================================
+    ax.scatter([xv], [yv], s=70, zorder=5, label="Vértice")
 
-        st.subheader("Resolução")
+    if delta > 0:
+        ax.scatter([x1, x2], [0, 0], s=70, zorder=5, label="Raízes")
+    elif delta == 0:
+        ax.scatter([x1], [0], s=70, zorder=5, label="Raiz")
 
-        if b >= 0:
-            st.latex(
-                f"{a}x + {b} = 0"
-            )
-        else:
-            st.latex(
-                f"{a}x - {abs(b)} = 0"
-            )
+    ax.set_xlabel("x")
+    ax.set_ylabel("y")
+    ax.set_title("Gráfico da função quadrática")
+    ax.grid(True)
+    ax.legend()
 
-        st.latex(
-            f"{a}x = {-b}"
-        )
-
-        st.latex(
-            f"x = \\frac{{{-b}}}{{{a}}}"
-        )
-
-        st.latex(
-            f"x = {x_raiz:.2f}"
-        )
-
-        # ====================================
-        # GRÁFICO
-        # ====================================
-
-        st.subheader("📊 Gráfico da função")
-
-        # Cria intervalo para o gráfico
-        x = np.linspace(
-            x_raiz - 10,
-            x_raiz + 10,
-            500
-        )
-
-        # Função do primeiro grau
-        y = a * x + b
-
-        # Cria gráfico
-        fig, ax = plt.subplots(
-            figsize=(8, 5)
-        )
-
-        # Desenha a reta
-        ax.plot(
-            x,
-            y,
-            linewidth=2,
-            label=f"y = {a}x + {b}"
-        )
-
-        # Eixo X
-        ax.axhline(
-            y=0,
-            linewidth=1
-        )
-
-        # Eixo Y
-        ax.axvline(
-            x=0,
-            linewidth=1
-        )
-
-        # Marca a raiz
-        ax.scatter(
-            [x_raiz],
-            [0],
-            s=100,
-            zorder=5,
-            label=f"Raiz x = {x_raiz:.2f}"
-        )
-
-        # ====================================
-        # CONFIGURAÇÃO DO GRÁFICO
-        # ====================================
-
-        ax.set_xlabel("x")
-        ax.set_ylabel("y")
-
-        ax.set_title(
-            "Gráfico da Função do 1º Grau"
-        )
-
-        ax.grid(True)
-        ax.legend()
-
-        # ====================================
-        # MOSTRA GRÁFICO
-        # ====================================
-
-        st.pyplot(fig)
-
-        plt.close(fig)
-
+    st.pyplot(fig)
+    plt.close(fig)
 
 # ========================================
 # RODAPÉ
 # ========================================
 
 st.divider()
-
-st.caption(
-    "📚 Calculadora de Equação do 1º Grau"
-)
+st.caption("MatFuturo • Aplicativo de Equação do 2º Grau")
